@@ -61,7 +61,13 @@ library:
     source-dirs:
         src
     dependencies:
-        []
+        - aeson
+        - bytestring
+        - cassava
+        - req
+        - scientific
+        - text
+        - time
 
 executables:
     bnb-staking-csvs:
