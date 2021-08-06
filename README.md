@@ -3,7 +3,7 @@
 [![bnb-staking-csvs Build Status](https://github.com/prikhi/bnb-staking-csvs/actions/workflows/main.yml/badge.svg)](https://github.com/prikhi/bnb-staking-csvs/actions/workflows/main.yml)
 
 
-Describe your project here.
+Generate CSV exports of your staking rewards on BinanceChain.
 
 Requires [`stack`][get-stack]:
 
