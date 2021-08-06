@@ -64,13 +64,13 @@ library:
     source-dirs:
         src
     dependencies:
-        - aeson
-        - bytestring
-        - cassava
-        - req
-        - scientific
-        - text
-        - time
+        - aeson < 2
+        - bytestring < 1
+        - cassava < 1
+        - req >= 3 && < 4
+        - scientific < 1
+        - text >= 1 && < 2
+        - time >= 1 && < 2
 
 executables:
     bnb-staking-csvs:
