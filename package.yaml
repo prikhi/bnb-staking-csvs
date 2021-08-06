@@ -1,0 +1,93 @@
+---
+
+name:
+    bnb-staking-csvs
+version:
+    0.1.0.0
+github:
+    prikhi/bnb-staking-csvs
+homepage:
+    https://github.com/prikhi/bnb-staking-csvs#readme
+license:
+    BSD3
+license-file:
+    LICENSE
+author:
+    Pavan Rikhi
+maintainer:
+    pavan.rikhi@gmail.com
+copyright:
+    2021 Pavan Rikhi
+category:
+    Web
+extra-source-files:
+    - README.md
+    - CHANGELOG.md
+
+
+synopsis:
+    Short, one-line summary of project here.
+
+description: |
+    Longer description of package here.
+
+    Maybe include a simple usage example.
+
+
+ghc-options:
+    - -Wall
+    - -Wcompat
+    - -Wincomplete-record-updates
+    - -Wincomplete-uni-patterns
+    - -Wredundant-constraints
+    - -O2
+
+default-extensions:
+    - DeriveGeneric
+    - LambdaCase
+    - NamedFieldPuns
+    - OverloadedStrings
+    - TupleSections
+    - TypeApplications
+    - TypeOperators
+    - ViewPatterns
+
+
+dependencies:
+    - base >= 4.7 && < 5
+
+
+library:
+    source-dirs:
+        src
+    dependencies:
+        []
+
+executables:
+    bnb-staking-csvs:
+        source-dirs:
+            app
+        main:
+            Main.hs
+        ghc-options:
+            - -threaded
+            - -rtsopts
+            - -with-rtsopts "-N -T"
+        dependencies:
+            - bnb-staking-csvs
+
+tests:
+    bnb-staking-csvs-test:
+        main: Spec.hs
+        source-dirs:
+            tests
+        ghc-options:
+            - -threaded
+            - -rtsopts
+            - -with-rtsopts "-N -T"
+        dependencies:
+            - bnb-staking-csvs
+            - hedgehog
+            - tasty
+            - tasty-hedgehog
+            - tasty-hunit
