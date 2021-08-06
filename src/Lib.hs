@@ -136,13 +136,17 @@ instance ToField MyZonedTime where
 -- | Fetch all rewards for the given Delegator PubKey.
 getAllRewards :: MonadHttp m => T.Text -> m [Reward]
 getAllRewards pubKey = do
-    let pageSize = Just 50
-    initialResp <- makeRequest $ GetRewards pubKey pageSize Nothing
+    let pageSize  = 50
+        jPageSize = Just pageSize
+    initialResp <- makeRequest $ GetRewards pubKey jPageSize Nothing
     let rewardCount = rrTotal initialResp
-    remainingRewards <- if Just rewardCount < pageSize
+    remainingRewards <- if rewardCount < pageSize
         then return []
-        else fmap concat . forM [50, 100 .. rewardCount] $ \(Just -> offset) ->
-            rrRewards <$> makeRequest (GetRewards pubKey pageSize offset)
+        else
+            fmap concat
+            . forM [pageSize, pageSize * 2 .. rewardCount]
+            $ \(Just -> offset) ->
+                  rrRewards <$> makeRequest (GetRewards pubKey jPageSize offset)
     return . sortResults $ rrRewards initialResp <> remainingRewards
   where
     sortResults :: [Reward] -> [Reward]
