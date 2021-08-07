@@ -26,15 +26,19 @@ extra-source-files:
 
 
 synopsis:
-    Generate CSV Exports of Your BNB Staking Rewards
+    Generate CSV Exports of Your BNB Staking Rewards.
 
 description: |
-    @bnb-staking-rewards@ is a CLI program that queries the Binance.org API for
+    @bnb-staking-csvs@ is a CLI program that queries the Binance.org API for
     all of a delegator's rewards and exports the resulting data to a CSV file.
 
-    You can install @bnb-staking-rewards@ with Stack: @stack install --resolver
-    nightly bnb-stakingrewards@. Then run @bnb-staking-rewards
-    <DELEGATOR_PUBKEY>@ to print out your rewards in CSV format.
+    You can install @bnb-staking-csvs@ with Stack: @stack install --resolver
+    nightly bnb-staking-csvs@. Then run the following to print out your
+    rewards in CSV format:
+
+    @
+      bnb-staking-rewards \<DELEGATOR_PUBKEY>
+    @
 
 
 ghc-options:
