@@ -9,6 +9,7 @@ Requires [`stack`][get-stack]:
 
 ```sh
 stack run -- <DELEGATOR_PUBKEY>
+stack run -- --help
 ```
 
 [get-stack]: https://docs.haskellstack.org/en/stable/README/
