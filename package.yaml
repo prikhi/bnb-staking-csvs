@@ -37,8 +37,10 @@ description: |
     rewards in CSV format:
 
     @
-      bnb-staking-rewards \<DELEGATOR_PUBKEY>
+      bnb-staking-csvs \<DELEGATOR_PUBKEY>
     @
+
+    See @bnb-staking-csvs --help@ for additional options.
 
 
 ghc-options:
@@ -72,6 +74,7 @@ library:
         - bytestring < 1
         - cassava < 1
         - cmdargs >= 0.10 && < 1
+        - cointracking-imports < 1
         - req >= 3 && < 4
         - scientific < 1
         - text >= 1 && < 2

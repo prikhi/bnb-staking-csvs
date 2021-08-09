@@ -29,6 +29,8 @@ import           System.Console.CmdArgs         ( (&=)
                                                 )
 
 import           Console.BnbStaking.Api         ( getAllRewards )
+import           Console.BnbStaking.CoinTracking
+                                                ( makeCoinTrackingImport )
 import           Console.BnbStaking.Csv         ( makeCsvContents )
 import           Paths_bnb_staking_csvs         ( version )
 
@@ -39,21 +41,27 @@ import qualified Data.Text                     as T
 -- results.
 run :: Args -> IO ()
 run Args {..} = do
-    rewards <- runReq defaultHttpConfig (getAllRewards $ T.pack argPubKey)
-    output  <- makeCsvContents rewards
+    rewards <- runReq defaultHttpConfig $ getAllRewards $ T.pack argPubKey
     let outputFile = fromMaybe "-" argOutputFile
-    if outputFile == "-"
-        then LBC.putStr output
-        else LBC.writeFile outputFile output
+    if argCoinTracking
+        then makeCoinTrackingImport outputFile argPubKey rewards
+        else do
+            output <- makeCsvContents rewards
+            if outputFile == "-"
+                then LBC.putStr output
+                else LBC.writeFile outputFile output
 
 
 -- | CLI arguments supported by the executable.
 data Args = Args
-    { argPubKey     :: String
+    { argPubKey       :: String
     -- ^ BinanceChain account's pubkey.
-    , argOutputFile :: Maybe String
+    , argOutputFile   :: Maybe String
     -- ^ Optional output file. 'Nothing' or @'Just' "-"@ will print to
     -- 'System.IO.stdout'.
+    , argCoinTracking :: Bool
+    -- ^ Flag to enable writing/printing files formatted for CoinTracking
+    -- Bulk Imports.
     }
     deriving (Show, Read, Eq, Data, Typeable)
 
@@ -64,14 +72,18 @@ getArgs = cmdArgs argSpec
 argSpec :: Args
 argSpec =
     Args
-            { argPubKey     = def &= argPos 0 &= typ "ACCOUNT_PUBKEY"
-            , argOutputFile =
+            { argPubKey       = def &= argPos 0 &= typ "ACCOUNT_PUBKEY"
+            , argOutputFile   =
                 Nothing
                 &= help "File to write the export to. Default: stdout"
                 &= explicit
                 &= name "output-file"
                 &= name "o"
                 &= typ "FILE"
+            , argCoinTracking = False
+                                &= help "Generate a CoinTracking Import file."
+                                &= explicit
+                                &= name "cointracking"
             }
         &= summary
                (  "bnb-staking-csvs v"

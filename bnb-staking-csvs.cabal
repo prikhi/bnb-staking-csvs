@@ -15,8 +15,10 @@ description:    @bnb-staking-csvs@ is a CLI program that queries the Binance.org
                 rewards in CSV format:
                 .
                 @
-                  bnb-staking-rewards \<DELEGATOR_PUBKEY>
+                  bnb-staking-csvs \<DELEGATOR_PUBKEY>
                 @
+                .
+                See @bnb-staking-csvs --help@ for additional options.
 category:       Web, Finance, Console
 homepage:       https://github.com/prikhi/bnb-staking-csvs#readme
 bug-reports:    https://github.com/prikhi/bnb-staking-csvs/issues
@@ -37,6 +39,7 @@ source-repository head
 library
   exposed-modules:
       Console.BnbStaking.Api
+      Console.BnbStaking.CoinTracking
       Console.BnbStaking.Csv
       Console.BnbStaking.Main
   other-modules:
@@ -59,6 +62,7 @@ library
     , bytestring <1
     , cassava <1
     , cmdargs >=0.10 && <1
+    , cointracking-imports <1
     , req ==3.*
     , scientific <1
     , text ==1.*
