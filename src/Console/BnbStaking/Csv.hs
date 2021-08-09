@@ -2,7 +2,8 @@
 {- | CSV serialization of BNB Staking Rewards.
 -}
 module Console.BnbStaking.Csv
-    ( ExportData(..)
+    ( makeCsvContents
+    , ExportData(..)
     , convertReward
     , MyZonedTime(..)
     ) where
@@ -10,6 +11,7 @@ module Console.BnbStaking.Csv
 import           Data.Csv                       ( DefaultOrdered
                                                 , ToField(..)
                                                 , ToNamedRecord
+                                                , encodeDefaultOrderedByName
                                                 )
 import           Data.Scientific                ( FPFormat(..)
                                                 , formatScientific
@@ -23,8 +25,14 @@ import           GHC.Generics                   ( Generic )
 
 import           Console.BnbStaking.Api         ( Reward(..) )
 
+import qualified Data.ByteString.Lazy          as LBS
 import qualified Data.Text                     as T
 
+
+-- | Build the CSV contents for the given rewards, including the header
+-- row.
+makeCsvContents :: [Reward] -> IO LBS.ByteString
+makeCsvContents = fmap encodeDefaultOrderedByName . mapM convertReward
 
 -- | Datatype representing a single row in the CSV export.
 data ExportData = ExportData

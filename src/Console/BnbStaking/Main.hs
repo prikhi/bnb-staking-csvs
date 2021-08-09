@@ -8,7 +8,7 @@ module Console.BnbStaking.Main
     , getArgs
     , Args(..)
     ) where
-import           Data.Csv                       ( encodeDefaultOrderedByName )
+import           Data.Maybe                     ( fromMaybe )
 import           Data.Version                   ( showVersion )
 import           Network.HTTP.Req               ( defaultHttpConfig
                                                 , runReq
@@ -19,6 +19,7 @@ import           System.Console.CmdArgs         ( (&=)
                                                 , argPos
                                                 , cmdArgs
                                                 , def
+                                                , explicit
                                                 , help
                                                 , helpArg
                                                 , name
@@ -28,25 +29,31 @@ import           System.Console.CmdArgs         ( (&=)
                                                 )
 
 import           Console.BnbStaking.Api         ( getAllRewards )
-import           Console.BnbStaking.Csv         ( convertReward )
+import           Console.BnbStaking.Csv         ( makeCsvContents )
 import           Paths_bnb_staking_csvs         ( version )
 
-import qualified Data.ByteString.Lazy.Char8    as LBS
+import qualified Data.ByteString.Lazy.Char8    as LBC
 import qualified Data.Text                     as T
 
 -- | Run the executable - parsing args, making queries, & printing the
 -- results.
 run :: Args -> IO ()
-run Args {..} =
-    runReq defaultHttpConfig (getAllRewards $ T.pack argPubKey)
-        >>= mapM convertReward
-        >>= (LBS.putStr . encodeDefaultOrderedByName)
+run Args {..} = do
+    rewards <- runReq defaultHttpConfig (getAllRewards $ T.pack argPubKey)
+    output  <- makeCsvContents rewards
+    let outputFile = fromMaybe "-" argOutputFile
+    if outputFile == "-"
+        then LBC.putStr output
+        else LBC.writeFile outputFile output
 
 
 -- | CLI arguments supported by the executable.
 data Args = Args
-    { argPubKey :: String
+    { argPubKey     :: String
     -- ^ BinanceChain account's pubkey.
+    , argOutputFile :: Maybe String
+    -- ^ Optional output file. 'Nothing' or @'Just' "-"@ will print to
+    -- 'System.IO.stdout'.
     }
     deriving (Show, Read, Eq, Data, Typeable)
 
@@ -56,7 +63,16 @@ getArgs = cmdArgs argSpec
 
 argSpec :: Args
 argSpec =
-    Args { argPubKey = def &= argPos 0 &= typ "ACCOUNT_PUBKEY" }
+    Args
+            { argPubKey     = def &= argPos 0 &= typ "ACCOUNT_PUBKEY"
+            , argOutputFile =
+                Nothing
+                &= help "File to write the export to. Default: stdout"
+                &= explicit
+                &= name "output-file"
+                &= name "o"
+                &= typ "FILE"
+            }
         &= summary
                (  "bnb-staking-csvs v"
                <> showVersion version
