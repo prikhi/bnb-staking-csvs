@@ -36,7 +36,9 @@ source-repository head
 
 library
   exposed-modules:
-      Lib
+      Console.BnbStaking.Api
+      Console.BnbStaking.Csv
+      Console.BnbStaking.Main
   other-modules:
       Paths_bnb_staking_csvs
   hs-source-dirs:

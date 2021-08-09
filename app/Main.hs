@@ -1,6 +1,6 @@
 module Main where
 
-import           Lib
+import           Console.BnbStaking.Main (run)
 
 main :: IO ()
 main = run

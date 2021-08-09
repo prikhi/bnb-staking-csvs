@@ -1,25 +1,17 @@
-{-| Contains all the functionality of the app.
-
-TODO: Should split out into BnbStaking sub-modules: Main, Binance, Csv
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE RecordWildCards #-}
+{- | Binance.org API requests & responses.
 
 -}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE ViewPatterns #-}
-module Lib
-    ( run
-      -- * CSV Data
-    , ExportData(..)
-    , convertReward
-    , MyZonedTime(..)
-      -- * Binance.org API
-    , getAllRewards
-    , makeRequest
-    , Endpoint(..)
-    , RewardResponse(..)
+module Console.BnbStaking.Api
+    ( -- * Rewards
+      getAllRewards
     , Reward(..)
+      -- * Low-Level Requests & Responses
+    , Endpoint(..)
+    , makeRequest
+    , RewardResponse(..)
     ) where
 
 import           Control.Monad                  ( forM )
@@ -27,23 +19,12 @@ import           Data.Aeson                     ( (.:)
                                                 , FromJSON(..)
                                                 , withObject
                                                 )
-import           Data.Csv                       ( DefaultOrdered
-                                                , ToField(..)
-                                                , ToNamedRecord
-                                                , encodeDefaultOrderedByName
-                                                )
 import           Data.List                      ( sortOn )
 import           Data.Maybe                     ( fromMaybe )
-import           Data.Scientific                ( FPFormat(..)
-                                                , Scientific
-                                                , formatScientific
-                                                )
+import           Data.Scientific                ( Scientific )
 import           Data.Time                      ( UTCTime
-                                                , ZonedTime(..)
                                                 , defaultTimeLocale
-                                                , formatTime
                                                 , parseTimeM
-                                                , utcToLocalZonedTime
                                                 )
 import           GHC.Generics                   ( Generic )
 import           Network.HTTP.Req               ( (/:)
@@ -53,85 +34,14 @@ import           Network.HTTP.Req               ( (/:)
                                                 , NoReqBody(..)
                                                 , Scheme(Https)
                                                 , Url
-                                                , defaultHttpConfig
                                                 , https
                                                 , jsonResponse
                                                 , req
                                                 , responseBody
-                                                , runReq
-                                                )
-import           System.Environment             ( getArgs )
-import           System.IO                      ( hPutStrLn
-                                                , stderr
                                                 )
 
-import qualified Data.ByteString.Lazy.Char8    as LBS
 import qualified Data.Text                     as T
 
-
--- | Run the executable - parsing args, making queries, & printing the
--- results.
-run :: IO ()
-run = getArgs >>= \case
-    [pubKey] ->
-        runReq defaultHttpConfig (getAllRewards $ T.pack pubKey)
-            >>= mapM convertReward
-            >>= LBS.putStr
-            .   encodeDefaultOrderedByName
-    _ -> hPutStrLn
-        stderr
-        "bnb-staking-csvs: expected 1 argument - <DELEGATOR_PUBKEY>"
-
-
--- CSV Data
-
--- | Datatype representing a single row in the CSV export.
-data ExportData = ExportData
-    { time             :: MyZonedTime
-    -- ^ The time of the reward.
-    , amount           :: T.Text
-    -- ^ The reward amount.
-    , currency         :: T.Text
-    -- ^ Always @BNB@, but sometimes a useful column for CSV imports.
-    , delegator        :: T.Text
-    -- ^ The address that was rewarded.
-    , validator        :: T.Text
-    -- ^ The validator's name.
-    , validatorAddress :: T.Text
-    -- ^ The address the delegator is validating to.
-    , height           :: Integer
-    -- ^ The height of the reward's block.
-    }
-    deriving (Show, Read, Generic)
-
-instance ToNamedRecord ExportData
-instance DefaultOrdered ExportData
-
--- | Render a 'Reward' into our target export data by converting to
--- localtime(respecting DST), & formatting the amount column to 8 decimal
--- places.
-convertReward :: Reward -> IO ExportData
-convertReward Reward {..} = do
-    localRewardTime <- utcToLocalZonedTime rRewardTime
-    return $ ExportData
-        { time             = MyZonedTime localRewardTime
-        , amount           = T.pack $ formatScientific Fixed (Just 8) rReward
-        , currency         = "BNB"
-        , delegator        = rDelegator
-        , validator        = rValidatorName
-        , validatorAddress = rValidatorAddress
-        , height           = rHeight
-        }
-
--- | Wrapper type to support custom 'ToField' instance.
-newtype MyZonedTime = MyZonedTime { fromMyZonedTime :: ZonedTime } deriving (Show, Read)
-
-instance ToField MyZonedTime where
-    toField (MyZonedTime zt) =
-        toField $ formatTime defaultTimeLocale "%FT%T%Q%Ez" zt
-
-
--- Binance.org API
 
 -- | Fetch all rewards for the given Delegator PubKey.
 getAllRewards :: MonadHttp m => T.Text -> m [Reward]
