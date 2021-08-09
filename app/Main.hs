@@ -1,6 +1,8 @@
 module Main where
 
-import           Console.BnbStaking.Main (run)
+import           Console.BnbStaking.Main        ( getArgs
+                                                , run
+                                                )
 
 main :: IO ()
-main = run
+main = getArgs >>= run

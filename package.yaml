@@ -71,6 +71,7 @@ library:
         - aeson < 2
         - bytestring < 1
         - cassava < 1
+        - cmdargs >= 0.10 && < 1
         - req >= 3 && < 4
         - scientific < 1
         - text >= 1 && < 2
