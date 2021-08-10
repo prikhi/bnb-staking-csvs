@@ -2,12 +2,16 @@
 
 ## master
 
+
+## v0.2.0.0
+
 * Add a `--cointracking` flag to format the data for use with CoinTracking's
   Bulk Import feature.
 * Add an `--output-file` CLI argument to make the executable write to a file
   instead of print to stdout.
 * Use the `cmdargs` package to parse CLI arguments.
 * Split library into `Console.BnbStaking` module hierarchy.
+
 
 ## v0.1.0.0
 
