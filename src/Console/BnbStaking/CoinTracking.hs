@@ -41,7 +41,7 @@ makeCoinTrackingImport dest pubkey =
 -- | Write or print the generated import data.
 writeOrPrintImportData :: FilePath -> [CTImportData] -> IO ()
 writeOrPrintImportData dest importData = if dest == "-"
-    then LBC.putStr $ coinTrackingCsvImport importData
+    then LBC.putStrLn $ coinTrackingCsvImport importData
     else writeImportDataToFile dest importData
 
 
