@@ -2,6 +2,9 @@
 
 ## master
 
+
+## v0.2.1.0
+
 * Add `--year` flag for filtering output.
 * Bump dependency versions(aeson).
 
