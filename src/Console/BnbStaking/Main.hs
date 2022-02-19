@@ -8,7 +8,13 @@ module Console.BnbStaking.Main
     , getArgs
     , Args(..)
     ) where
+import           Control.Monad                  ( filterM )
 import           Data.Maybe                     ( fromMaybe )
+import           Data.Time                      ( localDay
+                                                , toGregorian
+                                                , utcToLocalZonedTime
+                                                , zonedTimeToLocalTime
+                                                )
 import           Data.Version                   ( showVersion )
 import           Network.HTTP.Req               ( defaultHttpConfig
                                                 , runReq
@@ -28,7 +34,9 @@ import           System.Console.CmdArgs         ( (&=)
                                                 , typ
                                                 )
 
-import           Console.BnbStaking.Api         ( getAllRewards )
+import           Console.BnbStaking.Api         ( Reward(rRewardTime)
+                                                , getAllRewards
+                                                )
 import           Console.BnbStaking.CoinTracking
                                                 ( makeCoinTrackingImport )
 import           Console.BnbStaking.Csv         ( makeCsvContents )
@@ -46,7 +54,21 @@ run Args {..} = do
     if argCoinTracking
         then makeCoinTrackingImport outputFile argPubKey rewards
         else do
-            output <- makeCsvContents rewards
+            filteredRewards <- maybe
+                (return rewards)
+                (\year -> filterM
+                    (\reward -> do
+                        rewardTime <- utcToLocalZonedTime $ rRewardTime reward
+                        return
+                            . (\(y, _, _) -> y == year)
+                            . toGregorian
+                            . localDay
+                            $ zonedTimeToLocalTime rewardTime
+                    )
+                    rewards
+                )
+                argYear
+            output <- makeCsvContents filteredRewards
             if outputFile == "-"
                 then LBC.putStr output
                 else LBC.writeFile outputFile output
@@ -62,6 +84,8 @@ data Args = Args
     , argCoinTracking :: Bool
     -- ^ Flag to enable writing/printing files formatted for CoinTracking
     -- Bulk Imports.
+    , argYear         :: Maybe Integer
+    -- ^ Year for limiting the output.
     }
     deriving (Show, Read, Eq, Data, Typeable)
 
@@ -84,6 +108,12 @@ argSpec =
                                 &= help "Generate a CoinTracking Import file."
                                 &= explicit
                                 &= name "cointracking"
+            , argYear         = Nothing
+                                &= help "Limit to given year"
+                                &= explicit
+                                &= name "y"
+                                &= name "year"
+                                &= typ "YYYY"
             }
         &= summary
                (  "bnb-staking-csvs v"
