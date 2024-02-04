@@ -2,6 +2,10 @@
 
 ## master
 
+
+
+## v0.2.2.0
+
 * Add `--aggregate` flag for grouping all rewards by day.
 * Bump dependency versions(text).
 

@@ -3,7 +3,7 @@
 name:
     bnb-staking-csvs
 version:
-    0.2.1.0
+    0.2.2.0
 github:
     prikhi/bnb-staking-csvs
 homepage:
@@ -17,7 +17,7 @@ author:
 maintainer:
     pavan.rikhi@gmail.com
 copyright:
-    2021 Pavan Rikhi
+    2021-2024 Pavan Rikhi
 category:
     Web, Finance, Console
 extra-source-files:
