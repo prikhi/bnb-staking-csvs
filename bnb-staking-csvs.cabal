@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.36.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -65,7 +65,7 @@ library
     , cointracking-imports <1
     , req ==3.*
     , scientific <1
-    , text ==1.*
+    , text >=1 && <3
     , time ==1.*
   default-language: Haskell2010
 
