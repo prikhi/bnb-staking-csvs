@@ -1,7 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
-{- | Generate & write/print CoinTracking Bulk Import files.
 
--}
+-- | Generate & write/print CoinTracking Bulk Import files.
 module Console.BnbStaking.CoinTracking
     ( makeCoinTrackingImport
     , writeOrPrintImportData
@@ -9,20 +8,21 @@ module Console.BnbStaking.CoinTracking
     , bnb
     ) where
 
-import           Control.Monad                  ( (>=>) )
-import           Data.Time                      ( utcToLocalZonedTime )
-import           Web.CoinTracking.Imports       ( Amount(..)
-                                                , CTImportData(..)
-                                                , CTTransactionType(Staking)
-                                                , Currency(..)
-                                                , coinTrackingCsvImport
-                                                , writeImportDataToFile
-                                                )
+import Control.Monad ((>=>))
+import Data.Time (utcToLocalZonedTime)
+import Web.CoinTracking.Imports
+    ( Amount (..)
+    , CTImportData (..)
+    , CTTransactionType (Staking)
+    , Currency (..)
+    , coinTrackingCsvImport
+    , writeImportDataToFile
+    )
 
-import           Console.BnbStaking.Api         ( Reward(..) )
+import Console.BnbStaking.Api (Reward (..))
 
-import qualified Data.ByteString.Lazy.Char8    as LBC
-import qualified Data.Text                     as T
+import Data.ByteString.Lazy.Char8 qualified as LBC
+import Data.Text qualified as T
 
 
 -- | Generate the Bulk Import file for CoinTracking & write to destination
@@ -38,11 +38,13 @@ makeCoinTrackingImport
 makeCoinTrackingImport dest pubkey =
     makeImportData pubkey >=> writeOrPrintImportData dest
 
+
 -- | Write or print the generated import data.
 writeOrPrintImportData :: FilePath -> [CTImportData] -> IO ()
-writeOrPrintImportData dest importData = if dest == "-"
-    then LBC.putStrLn $ coinTrackingCsvImport importData
-    else writeImportDataToFile dest importData
+writeOrPrintImportData dest importData =
+    if dest == "-"
+        then LBC.putStrLn $ coinTrackingCsvImport importData
+        else writeImportDataToFile dest importData
 
 
 -- | Turn an account pubkey & reward into a 'CTImportData', localizing the
@@ -50,24 +52,27 @@ writeOrPrintImportData dest importData = if dest == "-"
 makeImportData :: String -> [Reward] -> IO [CTImportData]
 makeImportData pubkey = mapM $ \Reward {..} -> do
     zonedTime <- utcToLocalZonedTime rRewardTime
-    return CTImportData
-        { ctidType      = Staking
-        , ctidBuy       = Just $ Amount rReward bnb
-        , ctidSell      = Nothing
-        , ctidFee       = Nothing
-        , ctidExchange  = "BNB Wallet"
-        , ctidGroup     = "Staking"
-        , ctidComment   = "Imported From bnb-staking-csvs"
-        , ctidDate      = zonedTime
-        , ctidTradeId   = "BNB-STAKE-"
-                          <> T.pack pubkey
-                          <> "-"
-                          <> rValidatorAddress
-                          <> "-"
-                          <> T.pack (show rHeight)
-        , ctidBuyValue  = Nothing
-        , ctidSellValue = Nothing
-        }
+    return
+        CTImportData
+            { ctidType = Staking
+            , ctidBuy = Just $ Amount rReward bnb
+            , ctidSell = Nothing
+            , ctidFee = Nothing
+            , ctidExchange = "BNB Wallet"
+            , ctidGroup = "Staking"
+            , ctidComment = "Imported From bnb-staking-csvs"
+            , ctidDate = zonedTime
+            , ctidTradeId =
+                "BNB-STAKE-"
+                    <> T.pack pubkey
+                    <> "-"
+                    <> rValidatorAddress
+                    <> "-"
+                    <> T.pack (show rHeight)
+            , ctidBuyValue = Nothing
+            , ctidSellValue = Nothing
+            }
+
 
 -- | Binance Coin currency with the @BNB@ ticker & 8 decimals of precision.
 bnb :: Currency

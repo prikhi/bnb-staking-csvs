@@ -53,6 +53,7 @@ ghc-options:
 
 default-extensions:
     - DeriveGeneric
+    - ImportQualifiedPost
     - LambdaCase
     - NamedFieldPuns
     - OverloadedStrings
