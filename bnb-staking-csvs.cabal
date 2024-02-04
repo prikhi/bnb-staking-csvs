@@ -63,6 +63,7 @@ library
     , cassava <1
     , cmdargs >=0.10 && <1
     , cointracking-imports <1
+    , containers <1
     , req ==3.*
     , scientific <1
     , text >=1 && <3

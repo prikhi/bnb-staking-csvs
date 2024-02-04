@@ -8,8 +8,13 @@ module Console.BnbStaking.Main
     , getArgs
     , Args(..)
     ) where
-import           Control.Monad                  ( filterM )
-import           Data.Maybe                     ( fromMaybe )
+import           Control.Monad                  ( (<=<)
+                                                , filterM
+                                                , foldM
+                                                )
+import           Data.Maybe                     ( fromMaybe
+                                                , mapMaybe
+                                                )
 import           Data.Time                      ( localDay
                                                 , toGregorian
                                                 , utcToLocalZonedTime
@@ -34,7 +39,7 @@ import           System.Console.CmdArgs         ( (&=)
                                                 , typ
                                                 )
 
-import           Console.BnbStaking.Api         ( Reward(rRewardTime)
+import           Console.BnbStaking.Api         ( Reward(..)
                                                 , getAllRewards
                                                 )
 import           Console.BnbStaking.CoinTracking
@@ -43,35 +48,68 @@ import           Console.BnbStaking.Csv         ( makeCsvContents )
 import           Paths_bnb_staking_csvs         ( version )
 
 import qualified Data.ByteString.Lazy.Char8    as LBC
+import qualified Data.List                     as L
+import qualified Data.Map.Strict               as M
 import qualified Data.Text                     as T
 
 -- | Run the executable - parsing args, making queries, & printing the
 -- results.
 run :: Args -> IO ()
 run Args {..} = do
-    rewards <- runReq defaultHttpConfig $ getAllRewards $ T.pack argPubKey
+    let aggregator = if argAggregate then aggregateRewards else return
+        filterer = maybe return filterByYear argYear
+    rewards <- filterer <=< aggregator <=< runReq defaultHttpConfig $ getAllRewards $ T.pack argPubKey
     let outputFile = fromMaybe "-" argOutputFile
     if argCoinTracking
         then makeCoinTrackingImport outputFile argPubKey rewards
         else do
-            filteredRewards <- maybe
-                (return rewards)
-                (\year -> filterM
-                    (\reward -> do
-                        rewardTime <- utcToLocalZonedTime $ rRewardTime reward
-                        return
-                            . (\(y, _, _) -> y == year)
-                            . toGregorian
-                            . localDay
-                            $ zonedTimeToLocalTime rewardTime
-                    )
-                    rewards
-                )
-                argYear
-            output <- makeCsvContents filteredRewards
+            -- TODO: we calculate local zoned day in filterByYear & in
+            -- makeCsvContents. Can we do it just once?
+            output <- makeCsvContents rewards
             if outputFile == "-"
                 then LBC.putStr output
                 else LBC.writeFile outputFile output
+    where
+        aggregateRewards :: [Reward] -> IO [Reward]
+        aggregateRewards =
+            fmap (mapMaybe (aggregate . snd) . M.toList)
+                . foldM
+                    ( \acc r -> do
+                        rewardTime <- utcToLocalZonedTime $ rRewardTime r
+                        return $
+                            M.insertWith
+                                (<>)
+                                (localDay $ zonedTimeToLocalTime rewardTime)
+                                [r]
+                                acc
+                    )
+                    M.empty
+        aggregate :: [Reward] -> Maybe Reward
+        aggregate = \case
+            [] -> Nothing
+            rs ->
+                Just $
+                    Reward
+                        { rValidatorName =
+                            "AGGREGATE-"
+                                <> T.intercalate
+                                    "-"
+                                    (L.sort $ map rValidatorName rs)
+                        , rValidatorAddress = "AGGREGATE-" <> T.pack (show $ length rs)
+                        , rDelegator = T.intercalate "-" $ L.sort $ map rDelegator rs
+                        , rChainId = rChainId $ head rs
+                        , rHeight = rHeight $ head rs
+                        , rReward = sum $ map rReward rs
+                        , rRewardTime = minimum $ map rRewardTime rs
+                        }
+        filterByYear :: Integer -> [Reward] -> IO [Reward]
+        filterByYear year = filterM $ \reward -> do
+            rewardTime <- utcToLocalZonedTime $ rRewardTime reward
+            return
+                . (\(y, _, _) -> y == year)
+                . toGregorian
+                . localDay
+                $ zonedTimeToLocalTime rewardTime
 
 
 -- | CLI arguments supported by the executable.
@@ -86,6 +124,8 @@ data Args = Args
     -- Bulk Imports.
     , argYear         :: Maybe Integer
     -- ^ Year for limiting the output.
+    , argAggregate    :: Bool
+    -- ^ Aggregate rewards into day buckets.
     }
     deriving (Show, Read, Eq, Data, Typeable)
 
@@ -114,6 +154,10 @@ argSpec =
                                 &= name "y"
                                 &= name "year"
                                 &= typ "YYYY"
+            , argAggregate    = False
+                                &= help "Output one aggregate row per day."
+                                &= explicit
+                                &= name "aggregate"
             }
         &= summary
                (  "bnb-staking-csvs v"
